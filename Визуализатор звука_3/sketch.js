@@ -65,6 +65,7 @@ function draw() {
         //Скорость звука
         sound.rate(speedSlider.value());
 
+
         //Конфети
         stroke(random(360), 100, 100, 0.5);
         let strokeRange = rangeSlider.value();
