@@ -96,13 +96,13 @@ function setup() {
     //Bar chart инфо
     this.barData = [
         { label: "Quiz", value: averages.quiz, color: "red" },
-        { label: "Proj", value: averages.project, color: "blue" },
-        { label: "Ex", value: averages.exam, color: "green" },
-        { label: "FM", value: averages.finalMark, color: "orange" },
+        { label: "Project", value: averages.project, color: "blue" },
+        { label: "Exam", value: averages.exam, color: "green" },
+        { label: "Final Mark", value: averages.finalMark, color: "orange" },
         { label: "Quiz", value: maxValues.quiz, color: "purple" },
-        { label: "Proj", value: maxValues.project, color: "cyan" },
-        { label: "Ex", value: maxValues.exam, color: "magenta" },
-        { label: "FM", value: maxValues.finalMark, color: "yellow" },
+        { label: "Project", value: maxValues.project, color: "cyan" },
+        { label: "Exam", value: maxValues.exam, color: "magenta" },
+        { label: "Final Mark", value: maxValues.finalMark, color: "yellow" },
         { label: "Male", value: genderCounts.Male, color: "gray" },
         { label: "Female", value: genderCounts.Female, color: "pink" },
     ];
@@ -137,16 +137,20 @@ function drawBarChart() {
     for (let data of barData) {
         myBar.addBar(xValue, data.value, barWidth, data.color);
 
+    
+
         //Отображение надписи и значения
         let barX = myBar.x + xValue * (myBar.width / (myBar.xMax - myBar.xMin));
         let barY = myBar.y + myBar.height - data.value * (myBar.height / myBar.yMax);
         noStroke();
         fill(0);
         textSize(14);
-        textAlign(LEFT, CENTER);
-        text(`${data.label}: ${data.value.toFixed(1)}`, barX, barY - 10);
+        textAlign(LEFT);
+        text(`${data.value.toFixed(1)}`, barX, barY - 10);
 
         xValue++;
+
+        drawLegend(barData);
     }
 }
 
@@ -178,6 +182,23 @@ function drawPieChart() {
 
 
 }
+
+function drawLegend(data) {
+    let startX = 10;
+    let startY = 50;
+    let boxSize = 20;
+    let spacing = 30;
+
+    for (let i = 0; i < data.length; i++) {
+        fill(data[i].color);
+        rect(startX, startY + i * spacing, boxSize, boxSize);
+        fill(0);
+        textSize(16);
+        textAlign(LEFT, CENTER);
+        text(data[i].label, startX + boxSize + 10, startY + i * spacing + boxSize / 2);
+    }
+}
+
 //Функция Bar charts
 function Bar(x, y, width, height) {
     this.x = x;
