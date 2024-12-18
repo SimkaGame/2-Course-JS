@@ -30,7 +30,7 @@ function loadTrack(index) {
 function setup() {
     createCanvas(windowWidth, windowHeight);
     textAlign(CENTER);
-    textSize(32);
+    textSize(16);
 
     amplitude = new p5.Amplitude();
     fft = new p5.FFT();
@@ -38,9 +38,9 @@ function setup() {
 
     // Ползунки
     speedSlider = createSlider(0.5, 3, 1, 0.1);
-    speedSlider.position(20, 20);
+    speedSlider.position(20, 30);
     rangeSlider = createSlider(50, 300, 150, 10);
-    rangeSlider.position(20, 60);
+    rangeSlider.position(20, 70);
 
     // Кнопки управления
     playButton = createButton('▶️/⏸');
@@ -74,11 +74,14 @@ function draw() {
     background(0);
 
     fill(255);
-    text("Скорость", speedSlider.x * 2 + speedSlider.width + 50, 35);
-    text("Длина конфети", rangeSlider.x * 2 + rangeSlider.width + 100, 75);
-    text(progressSlider.x * 2 + progressSlider.width + 200, 155);
+    textAlign(LEFT);
+
+    //Ползунки
+    text("Скорость", speedSlider.x, speedSlider.y - 10);
+    text("Длина конфети", rangeSlider.x, rangeSlider.y - 10);
 
     if (isInitialised && !sound.isPlaying()) {
+        textAlign(CENTER);
         text("Press any key to play sound", width / 2, height / 2);
     } else if (sound.isPlaying()) {
         let level = amplitude.getLevel();
@@ -112,7 +115,7 @@ function draw() {
         }
 
         // Высокие и низкие частоты
-        spectrum = fft.analyze();
+        let spectrum = fft.analyze();
         let binWidth = width / spectrum.length;
 
         for (let i = 0; i < spectrum.length; i++) {
@@ -129,27 +132,14 @@ function draw() {
         progressSlider.value(sound.currentTime() / sound.duration());
 
         // Обновление текста времени
-        let currentTime = sound.currentTime();
-        let duration = sound.duration();
-        let currentMinutes = floor(currentTime / 60);
-        let currentSeconds = floor(currentTime % 60);
-        let durationMinutes = floor(duration / 60);
-        let durationSeconds = floor(duration % 60);
+        let currentTrackTime = sound.currentTime();
+        let trackDuration = sound.duration();
+        let currentMinutes = floor(currentTrackTime / 60);
+        let currentSeconds = floor(currentTrackTime % 60);
+        let durationMinutes = floor(trackDuration / 60);
+        let durationSeconds = floor(trackDuration % 60);
         timeText.html(nf(currentMinutes, 2) + ':' + nf(currentSeconds, 2) + ' / ' + nf(durationMinutes, 2) + ':' + nf(durationSeconds, 2));
     }
-}
-
-function keyPressed() {
-    if (!isInitialised) {
-        isInitialised = true;
-
-        if (isLoaded) {
-            sound.loop(0, speedSlider.value());
-        }
-    }
-
-    loop();
-    setTimeout(noLoop, 100);
 }
 
 function togglePlay() {
@@ -158,17 +148,6 @@ function togglePlay() {
     } else {
         sound.play();
     }
-
-    loop();
-    setTimeout(noLoop, 100);
-}
-
-function rewind() {
-    sound.jump(sound.currentTime() - 5);
-}
-
-function forward() {
-    sound.jump(sound.currentTime() + 5);
 }
 
 function nextTrack() {
