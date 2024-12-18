@@ -5,18 +5,30 @@ let amplitude;
 let amplitudes = [];
 let fft;
 let speedSlider, rangeSlider;
+let playButton, rewindButton, forwardButton, nextButton, prevButton;
+let progressSlider;
+let timeText;
+let trackList = ["1.mp3", "2.mp3", "3.mp3"];
+let currentTrackIndex = 0;
 
 function preload() {
-    soundFormats('mp3', 'wav');
-    sound = loadSound('assets/1.mp3', () => {
+    loadTrack(currentTrackIndex);
+}
+
+function loadTrack(index) {
+    if (sound) {
+        sound.stop();
+    }
+    sound = loadSound(`assets/${trackList[index]}`, () => {
         isLoaded = true;
+        sound.setVolume(0.2);
+        sound.play();
     });
     isInitialised = false;
-    sound.setVolume(0.2);
 }
 
 function setup() {
-    createCanvas(1024,600);
+    createCanvas(windowWidth, windowHeight);
     textAlign(CENTER);
     textSize(32);
 
@@ -24,11 +36,34 @@ function setup() {
     fft = new p5.FFT();
     colorMode(HSB, 360, 100, 100);
 
-    //Ползунки
+    // Ползунки
     speedSlider = createSlider(0.5, 3, 1, 0.1);
     speedSlider.position(20, 20);
     rangeSlider = createSlider(50, 300, 150, 10);
     rangeSlider.position(20, 60);
+
+    // Кнопки управления
+    playButton = createButton('▶️/⏸');
+    playButton.position(60, 175);
+    playButton.mousePressed(togglePlay);
+
+    nextButton = createButton('⏮');
+    nextButton.position(30, 175);
+    nextButton.mousePressed(nextTrack);
+
+    prevButton = createButton('⏭');
+    prevButton.position(110, 175);
+    prevButton.mousePressed(prevTrack);
+
+    // Ползунок прогресса
+    progressSlider = createSlider(0, 1, 0, 0.01);
+    progressSlider.position(20, 140);
+    progressSlider.input(updateProgress);
+
+    // Текст времени
+    timeText = createP('00:00 / 00:00');
+    timeText.position(45, 90);
+    timeText.style('color', 'white');
 
     for (let i = 0; i < width; i++) {
         amplitudes.push(0);
@@ -37,14 +72,14 @@ function setup() {
 
 function draw() {
     background(0);
-    
-    //текст
+
     fill(255);
     text("Скорость", speedSlider.x * 2 + speedSlider.width + 50, 35);
     text("Длина конфети", rangeSlider.x * 2 + rangeSlider.width + 100, 75);
+    text(progressSlider.x * 2 + progressSlider.width + 200, 155);
 
     if (isInitialised && !sound.isPlaying()) {
-        text("Нажми любую клавишу для воспроизведения музыки", width / 2, height / 2);
+        text("Press any key to play sound", width / 2, height / 2);
     } else if (sound.isPlaying()) {
         let level = amplitude.getLevel();
         amplitudes.push(level);
@@ -60,12 +95,12 @@ function draw() {
             let y = map(amplitudes[i], 0, 0.2, height / 2, 0);
             vertex(map(i, 0, amplitudes.length, 0, width), y);
         }
-        endShape(); 
+        endShape();
 
-        //Скорость звука
+        // Скорость звука
         sound.rate(speedSlider.value());
 
-        //Конфети
+        // Конфети
         stroke(random(360), 100, 100, 0.5);
         let strokeRange = rangeSlider.value();
         for (let i = 0; i < 10; i++) {
@@ -76,23 +111,31 @@ function draw() {
             line(x1, y1, x2, y2);
         }
 
-        //Высокие и низкие частоты
-        let spectrum = fft.analyze();
-        noStroke();
-        for (let i = 0; i < spectrum.length; i++) {
-            let x = map(i, 0, spectrum.length, 0, width);
-            let h = map(spectrum[i], 0, 255, height / 2, 0); 
+        // Высокие и низкие частоты
+        spectrum = fft.analyze();
+        let binWidth = width / spectrum.length;
 
-            //Окрашивание частот
-            if (i < spectrum.length / 3) {
-                fill((i + waveColor) % 60, 100, 100); // Низкие частоты
-            } else if (i > spectrum.length * 2 / 3) {
-                fill((i + waveColor + 240) % 360, 100, 100); // Высокие частоты
-            } else {
-                fill((i + waveColor) % 360, 100, 100);
-            }
-            rect(x, height, width / spectrum.length, -h);
+        for (let i = 0; i < spectrum.length; i++) {
+            let x = map(i, 0, spectrum.length - 500, width, 0);
+            let binHeight = map(spectrum[i], 0, 255, height, 0);
+            let hueValue = map(i, 0, spectrum.length, 0, 360);
+
+            fill(hueValue, 100, 100);
+            noStroke();
+            rect(x, binHeight, binWidth, height - binHeight);
         }
+
+        // Обновление ползунка прогресса
+        progressSlider.value(sound.currentTime() / sound.duration());
+
+        // Обновление текста времени
+        let currentTime = sound.currentTime();
+        let duration = sound.duration();
+        let currentMinutes = floor(currentTime / 60);
+        let currentSeconds = floor(currentTime % 60);
+        let durationMinutes = floor(duration / 60);
+        let durationSeconds = floor(duration % 60);
+        timeText.html(nf(currentMinutes, 2) + ':' + nf(currentSeconds, 2) + ' / ' + nf(durationMinutes, 2) + ':' + nf(durationSeconds, 2));
     }
 }
 
@@ -103,10 +146,43 @@ function keyPressed() {
         if (isLoaded) {
             sound.loop(0, speedSlider.value());
         }
+    }
+
+    loop();
+    setTimeout(noLoop, 100);
+}
+
+function togglePlay() {
+    if (sound.isPlaying()) {
+        sound.pause();
     } else {
-        if (key == ' ') {
-            if (sound.isPaused()) sound.play();
-            else sound.pause();
-        }
+        sound.play();
+    }
+
+    loop();
+    setTimeout(noLoop, 100);
+}
+
+function rewind() {
+    sound.jump(sound.currentTime() - 5);
+}
+
+function forward() {
+    sound.jump(sound.currentTime() + 5);
+}
+
+function nextTrack() {
+    currentTrackIndex = (currentTrackIndex + 1) % trackList.length;
+    loadTrack(currentTrackIndex);
+}
+
+function prevTrack() {
+    currentTrackIndex = (currentTrackIndex - 1 + trackList.length) % trackList.length;
+    loadTrack(currentTrackIndex);
+}
+
+function updateProgress() {
+    if (sound.isPlaying()) {
+        sound.jump(progressSlider.value() * sound.duration());
     }
 }
