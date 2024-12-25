@@ -12,9 +12,30 @@
     <!-- Main sketch file -->
     <script src="sketch.js"></script>
 
-
     <!-- Add extra scripts below -->
   </head>
   <body>
+    <div id="controls">
+      <button id="switchButton">Switch to Pie Chart</button>
+      <select id="categorySelect" style="display: none;">
+        <option value="Средние значения">Средние значения</option>
+        <option value="Максимальные значения">Максимальные значения</option>
+        <option value="Пол">Пол</option>
+      </select>
+    </div>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        const switchButton = document.getElementById('switchButton');
+        const categorySelect = document.getElementById('categorySelect');
+
+        switchButton.addEventListener('click', function() {
+          switchChartType();
+        });
+
+        categorySelect.addEventListener('change', function() {
+          updatePieData();
+        });
+      });
+    </script>
   </body>
 </html>
